@@ -13,7 +13,7 @@ __all__ = ("AddressBook",
 
 
 # Standard library
-from collections import UserDict, UserString
+from collections import UserDict
 
 
 # Constants
@@ -28,11 +28,22 @@ TABLE_HEAD = (TABLE_LINE + TABLE_ROW.format("Contact name", "Phone number")
 # Internal classes
 
 
-class Field(UserString):
+class Field():
     """Internal class. Base class for record fields."""
     def __init__(self, value: str) -> None:
-        super().__init__(value)
         self.value = value
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+    def __repr__(self) -> str:
+        return repr(self.value)
+
+    def __eq__(self, obj) -> bool:
+        if isinstance(obj, Field):
+            return self.value == obj.value
+        if isinstance(obj, str):
+            return self.value == obj
 
 
 class Name(Field):
@@ -54,46 +65,36 @@ class Phone(Field):
 # Public classes
 
 
-class Record(UserDict):
+class Record():
     """Class for storing contact information."""
     # Quick initialization.
     # For example:
     #>>> john_record = Record("John", "1234567890")
-    #>>> john_record
-    #{'name': 'John', 'phones': ['1234567890']}
     def __init__(self, name: str, phone: str = "") -> None:
-        phones = [Phone(phone)] if phone else []
-        super().__init__({"name": Name(name), "phones": phones})
         self.name = Name(name)
-        self.phones = phones
+        self.phones = [Phone(phone)] if phone else []
 
-    # Instance methods wrap superclass methods.
+    def __repr__(self) -> str:
+        return "Record(name={}, phones={})".format(self.name, self.phones)
 
     def add_phone(self, phone: str) -> None:
         """Implements the "add" command."""
-        self.get("phones").append(Phone(phone))
-        self.phones = self.get("phones")
+        self.phones.append(Phone(phone))
 
     def remove_phone(self, phone: str) -> None:
         """Internal method."""
-        self.get("phones").remove(Phone(phone))
-        self.phones = self.get("phones")
+        self.phones.remove(Phone(phone))
 
     def edit_phone(self, old_phone: str, new_phone: str) -> None:
         """Implements the "change" command."""
-        #>>> john_record = Record("John", "1234567890")
-        #>>> john_record.edit_phone("111", "333")
-        #ValueError
-        index = self.get("phones").index(Phone(old_phone))
-        self.get("phones")[index] = Phone(new_phone)
-        self.phones = self.get("phones")
+        index = self.phones.index(Phone(old_phone))
+        self.phones[index] = Phone(new_phone)
 
     def find_phone(self, phone: str) -> Phone | None:
         """Internal method."""
         target = Phone(phone)
-        for number in self.get("phones"):
-            if number == target:
-                return number
+        if target in self.phones:
+            return target
 
 
 class AddressBook(UserDict):
@@ -102,8 +103,8 @@ class AddressBook(UserDict):
     def __str__(self) -> str:
         table = TABLE_HEAD
         for name in sorted(self):
-            for phone in self.get(name).get("phones"):
-                table += TABLE_ROW.format(name, phone.data)
+            for phone in self.get(name).phones:
+                table += TABLE_ROW.format(name, phone.value)
         table += TABLE_LINE
         return table
 
