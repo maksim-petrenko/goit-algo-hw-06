@@ -40,10 +40,7 @@ class Field():
         return repr(self.value)
 
     def __eq__(self, obj) -> bool:
-        if isinstance(obj, Field):
-            return self.value == obj.value
-        if isinstance(obj, str):
-            return self.value == obj
+        return self.value == str(obj)
 
 
 class Name(Field):
@@ -92,9 +89,9 @@ class Record():
 
     def find_phone(self, phone: str) -> Phone | None:
         """Internal method."""
-        target = Phone(phone)
-        if target in self.phones:
-            return target
+        for number in self.phones:
+            if number == phone:
+                return number
 
 
 class AddressBook(UserDict):
